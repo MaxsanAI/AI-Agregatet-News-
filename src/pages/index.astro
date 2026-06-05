@@ -31,9 +31,14 @@ for (const url of feeds) {
     const limitedItems = feed.items.slice(0, 15);
     
     limitedItems.forEach(item => {
-      // Hvatanje slike ili fallback na Unsplash
-      let image = item.enclosure?.url || item.image?.url || item.content?.match(/src="([^"]*)"/)?.[1] || '';
-      if (!image) {
+      // Prioritetno hvatanje slike sa detekcijom Google-ovih "loših" slika
+      let image = item.media?.content?.$.url 
+               || item.enclosure?.url 
+               || item.image?.url 
+               || item.content?.match(/src="([^"]*)"/)?.[1];
+
+      // Ako slika ne postoji ili je Google-ova "neprikaziva" sličica, stavi fallback
+      if (!image || image.includes('googleusercontent') || image.includes('gstatic')) {
         image = 'https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=600';
       }
 
