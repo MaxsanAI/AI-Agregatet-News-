@@ -1,24 +1,62 @@
 ---
-interface Props { title: string; }
-const { title } = Astro.props;
+interface Props { 
+  title?: string;
+  description?: string;
+}
+
+const { 
+  title = "AI HUB NEWS | Latest Artificial Intelligence Developments", 
+  description = "Stay updated with the latest AI news from top tech sources including OpenAI, Google Gemini, Anthropic, and more. Your hub for everything AI."
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={Astro.url} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
-  <body class="bg-white dark:bg-bg-dim text-slate-900 dark:text-slate-100 min-h-screen transition-colors">
-    <nav class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-      <a href="/" class="text-xl font-bold text-primary-blue">AI HUB NEWS</a>
-      <div class="flex gap-4">
-        <button onclick="document.documentElement.classList.toggle('dark')" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 rounded-lg text-xs font-bold">
-          TOGGLE THEME
-        </button>
-        <a href="/privacy-policy" class="text-sm text-slate-400 hover:text-white">Privacy Policy</a>
-      </div>
-    </nav>
-    <slot />
+  <body class="bg-white dark:bg-bg-dim text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-300">
+    <header>
+      <nav class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+        <a href="/" class="text-xl font-bold text-primary-blue hover:opacity-80 transition-opacity">AI HUB NEWS</a>
+        <div class="flex gap-4">
+          <button id="themeToggle" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 rounded-lg text-xs font-bold transition-all hover:scale-105">
+            TOGGLE THEME
+          </button>
+          <a href="/privacy-policy" class="text-sm text-slate-400 hover:text-white transition-colors">Privacy</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="text-center p-10 text-slate-500 text-sm border-t border-slate-200 dark:border-slate-800 mt-10">
+      <p>&copy; {new Date().getFullYear()} AI HUB NEWS. All rights reserved.</p>
+    </footer>
+
+    <script is:inline>
+      const themeToggle = document.getElementById('themeToggle');
+      themeToggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+      });
+    </script>
   </body>
 </html>
