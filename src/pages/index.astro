@@ -19,14 +19,29 @@ const allNews = [];
 for (const url of feeds) {
   try {
     const feed = await parser.parseURL(url);
-    feed.items.forEach(item => {
+   const limitedItems = feed.items.slice(0, 5); 
+    
+    limitedItems.forEach(item => {
       const image = item.enclosure?.url || item.image?.url || item.content?.match(/src="([^"]*)"/)?.[1] || '';
-      if (image) allNews.push({ title: item.title, excerpt: item.contentSnippet || '', image, source: feed.title || 'AI News', link: item.link });
+      if (image) {
+        allNews.push({
+          title: item.title,
+          excerpt: item.contentSnippet || '',
+          image,
+          source: feed.title || 'AI News',
+          link: item.link
+        });
+      }
     });
-  } catch (e) {}
+  } catch (e) { console.error(e); }
 }
 
-const displayNews = allNews.sort(() => 0.5 - Math.random()).slice(0, 50);
+
+const uniqueNews = Array.from(new Set(allNews.map(a => a.title)))
+  .map(title => allNews.find(a => a.title === title));
+
+
+const displayNews = uniqueNews.sort(() => 0.5 - Math.random()).slice(0, 50);
 const featuredNews = displayNews.slice(0, 8);
 ---
 
