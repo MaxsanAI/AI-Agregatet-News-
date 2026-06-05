@@ -12,14 +12,16 @@ const feeds = [
   'https://x.ai/blog/rss.xml',
   'https://openai.com/news/rss.xml',
   'https://www.blog.google/products/gemini/rss/',
-  'https://venturebeat.com/category/ai/feed/'
+  'https://venturebeat.com/category/ai/feed/',
+  'https://www.dailyai.com/feed/',
+  'https://feeds.feedburner.com/ai-news',
 ];
 
 const allNews = [];
 for (const url of feeds) {
   try {
     const feed = await parser.parseURL(url);
-   const limitedItems = feed.items.slice(0, 15); 
+   const limitedItems = feed.items.slice(0, 20); 
     
     limitedItems.forEach(item => {
       const image = item.enclosure?.url || item.image?.url || item.content?.match(/src="([^"]*)"/)?.[1] || '';
