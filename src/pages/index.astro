@@ -5,7 +5,6 @@ import Parser from 'rss-parser';
 
 const parser = new Parser();
 
-// Proširena lista AI izvora
 const feeds = [
   'https://techcrunch.com/category/artificial-intelligence/feed/',
   'https://www.theverge.com/ai-artificial-intelligence/rss/index.xml',
@@ -19,17 +18,14 @@ const feeds = [
 
 const allNews = [];
 
-// Dohvatanje vesti iz svih feedova
 for (const url of feeds) {
   try {
     const feed = await parser.parseURL(url);
     feed.items.forEach(item => {
-      // Poboljšana logika za pronalaženje slike
       const image = item.enclosure?.url || 
                     item.image?.url || 
                     item.content?.match(/src="([^"]*)"/)?.[1] || 
                     '';
-                    
       if (image) {
         allNews.push({
           title: item.title,
@@ -40,26 +36,45 @@ for (const url of feeds) {
         });
       }
     });
-  } catch (e) { 
-    console.error(`Error fetching feed ${url}:`, e); 
-  }
+  } catch (e) { console.error(e); }
 }
 
-// Ograničavamo na poslednjih 24 vesti radi performansi i urednosti
 const displayNews = allNews.slice(0, 24);
+const featuredNews = allNews.slice(0, 8);
 ---
 
 <Layout title="AI HUB NEWS | Latest AI Developments">
-  <main class="max-w-7xl mx-auto p-6">
-    <header class="text-center py-12">
-      <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary-blue to-accent-pink mb-4">
-        AI HUB NEWS
-      </h1>
-      <p class="text-slate-400">The most relevant AI updates from X.AI, Anthropic, Google Gemini, and more.</p>
-    </header>
+  <!-- Ticker -->
+  <div class="bg-slate-950 border-y border-slate-800 overflow-hidden py-2">
+    <div class="whitespace-nowrap animate-marquee text-sm text-slate-400">
+      {allNews.map(n => <span class="mx-4">• {n.title}</span>)}
+    </div>
+  </div>
 
+  <main class="max-w-7xl mx-auto p-6">
+    <!-- Slider -->
+    <section x-data="{ active: 0 }" class="relative w-full overflow-hidden rounded-3xl mb-12 h-96 shadow-2xl">
+      {featuredNews.map((n, i) => (
+        <div x-show={`active === ${i}`} class="absolute inset-0 transition-opacity duration-500">
+          <img src={n.image} class="w-full h-full object-cover" />
+          <div class="absolute bottom-0 p-8 bg-gradient-to-t from-bg-dim to-transparent w-full">
+            <h2 class="text-3xl font-bold text-white">{n.title}</h2>
+          </div>
+        </div>
+      ))}
+      <button @click="active = (active - 1 + 8) % 8" class="absolute left-4 top-1/2 bg-black/50 text-white p-3 rounded-full hover:bg-primary-blue transition-colors">←</button>
+      <button @click="active = (active + 1) % 8" class="absolute right-4 top-1/2 bg-black/50 text-white p-3 rounded-full hover:bg-primary-blue transition-colors">→</button>
+    </section>
+
+    <!-- Grid -->
+    <h2 class="text-2xl font-bold mb-8 text-slate-100">Latest AI News</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {displayNews.map(n => <Card {...n} />)}
     </div>
   </main>
 </Layout>
+
+<style>
+  @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+  .animate-marquee { display: inline-block; animation: marquee 30s linear infinite; }
+</style>
