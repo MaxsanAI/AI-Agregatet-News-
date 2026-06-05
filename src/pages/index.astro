@@ -3,7 +3,15 @@ import Layout from '../layouts/Layout.astro';
 import Card from '../components/Card.astro';
 import Parser from 'rss-parser';
 
-// Podesi parser sa User-Agentom da izbegneš 403 blokade
+// Lista tvojih prilagođenih slika
+const fallbackImages = [
+  'https://pub-ea19a6cc29984fa087c982e0067da884.r2.dev/Gemini_Generated_Image_1qtcgw1qtcgw1qtc.png',
+  'https://pub-ea19a6cc29984fa087c982e0067da884.r2.dev/Gemini_Generated_Image_9fs3z9fs3z9fs3z9.png',
+  'https://pub-ea19a6cc29984fa087c982e0067da884.r2.dev/Gemini_Generated_Image_9wepod9wepod9wep.png',
+  'https://pub-ea19a6cc29984fa087c982e0067da884.r2.dev/Gemini_Generated_Image_aivp55aivp55aivp.png',
+  'https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=600'
+];
+
 const parser = new Parser({
   headers: {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -31,15 +39,15 @@ for (const url of feeds) {
     const limitedItems = feed.items.slice(0, 15);
     
     limitedItems.forEach(item => {
-      // Prioritetno hvatanje slike sa detekcijom Google-ovih "loših" slika
       let image = item.media?.content?.$.url 
-               || item.enclosure?.url 
-               || item.image?.url 
-               || item.content?.match(/src="([^"]*)"/)?.[1];
+                 || item.enclosure?.url 
+                 || item.image?.url 
+                 || item.content?.match(/src="([^"]*)"/)?.[1];
 
-      // Ako slika ne postoji ili je Google-ova "neprikaziva" sličica, stavi fallback
+      // Provera: ako slika ne postoji ili je Google-ov placeholder
       if (!image || image.includes('googleusercontent') || image.includes('gstatic')) {
-        image = 'https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=600';
+        // Nasumični izbor jedne od 5 slika iz niza
+        image = fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
       }
 
       allNews.push({
@@ -55,7 +63,6 @@ for (const url of feeds) {
   }
 }
 
-// Uklanjanje duplikata naslova
 const uniqueNews = Array.from(new Set(allNews.map(a => a.title)))
   .map(title => allNews.find(a => a.title === title));
 
