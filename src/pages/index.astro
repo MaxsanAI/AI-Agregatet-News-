@@ -3,52 +3,56 @@ import Layout from '../layouts/Layout.astro';
 import Card from '../components/Card.astro';
 import Parser from 'rss-parser';
 
-const parser = new Parser();
-headers: {
+// Podesi parser sa User-Agentom da izbegneš 403 blokade
+const parser = new Parser({
+  headers: {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   }
 });
+
 const feeds = [
   'https://techcrunch.com/category/artificial-intelligence/feed/',
-  'https://www.theverge.com/ai-artificial-intelligence/rss/index.xml',
   'https://blog.google/technology/ai/rss/',
   'https://news.google.com/rss/search?q=artificial+intelligence&hl=en-US&gl=US&ceid=US:en',
   'https://www.anthropic.com/feed.xml',
-  'https://x.ai/blog/rss.xml',
   'https://openai.com/news/rss.xml',
   'https://www.blog.google/products/gemini/rss/',
   'https://futuretools.beehiiv.com/feed',
   'https://venturebeat.com/category/ai/feed/',
   'https://www.dailyai.com/feed/',
-  'https://www.zdnet.com/topic/artificial-intelligence/rss.xml',
   'https://zapier.com/blog/feeds/latest/'
-  ];
+];
 
 const allNews = [];
+
 for (const url of feeds) {
   try {
     const feed = await parser.parseURL(url);
-   const limitedItems = feed.items.slice(0, 20); 
+    const limitedItems = feed.items.slice(0, 15);
     
     limitedItems.forEach(item => {
-      const image = item.enclosure?.url || item.image?.url || item.content?.match(/src="([^"]*)"/)?.[1] || '';
-      if (image) {
-        allNews.push({
-          title: item.title,
-          excerpt: item.contentSnippet || '',
-          image,
-          source: feed.title || 'AI News',
-          link: item.link
-        });
+      // Hvatanje slike ili fallback na Unsplash
+      let image = item.enclosure?.url || item.image?.url || item.content?.match(/src="([^"]*)"/)?.[1] || '';
+      if (!image) {
+        image = 'https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=600';
       }
+
+      allNews.push({
+        title: item.title,
+        excerpt: item.contentSnippet || '',
+        image,
+        source: feed.title || 'AI News',
+        link: item.link
+      });
     });
-  } catch (e) { console.error(e); }
+  } catch (e) { 
+    console.warn(`Preskačem feed: ${url}`); 
+  }
 }
 
-
+// Uklanjanje duplikata naslova
 const uniqueNews = Array.from(new Set(allNews.map(a => a.title)))
   .map(title => allNews.find(a => a.title === title));
-
 
 const displayNews = uniqueNews.sort(() => 0.5 - Math.random()).slice(0, 50);
 const featuredNews = displayNews.slice(0, 8);
@@ -56,26 +60,26 @@ const featuredNews = displayNews.slice(0, 8);
 
 <Layout title="AI HUB NEWS">
   <div class="bg-slate-950 border-y border-slate-800 overflow-hidden py-2">
-    <div class="whitespace-nowrap animate-marquee text-sm text-slate-400">{allNews.map(n => <span class="mx-4">• {n.title}</span>)}</div>
+    <div class="whitespace-nowrap animate-marquee text-sm text-slate-400">
+      {allNews.map(n => <span class="mx-4">• {n.title}</span>)}
+    </div>
   </div>
 
   <main class="max-w-7xl mx-auto p-6">
-   <section id="slider" class="relative w-full overflow-hidden rounded-3xl mb-12 h-96 shadow-2xl">
-  {featuredNews.map((n, i) => (
-    <div class="slide absolute inset-0 transition-opacity duration-1000" style={i === 0 ? 'opacity:1' : 'opacity:0'}>
-      <img src={n.image} alt={n.title} class="w-full h-full object-cover" />
-      <!-- Gradient pozadina ostaje ovdje -->
-      <div class="absolute bottom-0 p-8 bg-gradient-to-t from-black to-transparent w-full">
-        <!-- OVDJE JE PROMJENA: Naslov je sada direktan link -->
-        <a href={n.link} target="_blank" class="block">
-          <h2 class="text-3xl font-bold text-white hover:text-primary-blue transition-colors">
-            {n.title}
-          </h2>
-        </a>
-      </div>
-    </div>
-  ))}
-</section>
+    <section id="slider" class="relative w-full overflow-hidden rounded-3xl mb-12 h-96 shadow-2xl">
+      {featuredNews.map((n, i) => (
+        <div class="slide absolute inset-0 transition-opacity duration-1000" style={i === 0 ? 'opacity:1' : 'opacity:0'}>
+          <img src={n.image} alt={n.title} class="w-full h-full object-cover" />
+          <div class="absolute bottom-0 p-8 bg-gradient-to-t from-black to-transparent w-full">
+            <a href={n.link} target="_blank" class="block">
+              <h2 class="text-3xl font-bold text-white hover:text-blue-400 transition-colors">
+                {n.title}
+              </h2>
+            </a>
+          </div>
+        </div>
+      ))}
+    </section>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {displayNews.map(n => <Card {...n} />)}
@@ -86,11 +90,13 @@ const featuredNews = displayNews.slice(0, 8);
 <script>
   let active = 0;
   const slides = document.querySelectorAll('.slide');
-  setInterval(() => {
-    slides[active].style.opacity = '0';
-    active = (active + 1) % slides.length;
-    slides[active].style.opacity = '1';
-  }, 10000);
+  if (slides.length > 0) {
+    setInterval(() => {
+      slides[active].style.opacity = '0';
+      active = (active + 1) % slides.length;
+      slides[active].style.opacity = '1';
+    }, 10000);
+  }
 </script>
 
 <style>
@@ -102,6 +108,6 @@ const featuredNews = displayNews.slice(0, 8);
   .animate-marquee {
     display: inline-block;
     white-space: nowrap;
-   animation: marquee 300s linear infinite;
+    animation: marquee 300s linear infinite;
   }
 </style>
